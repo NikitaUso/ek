@@ -4,7 +4,7 @@
 
     <div class="controls-row">
       <button @click="generateCrossword" class="action-btn">Generera nytt korsord</button>
-      <button @click="checkAnswers" class="action-btn">Rätta</button>
+      <button class="action-btn auto-check-btn">AUTORÄTTA</button>
       <button @click="revealAll" class="action-btn">Visa facit</button>
     </div>
 
@@ -23,6 +23,7 @@
                 'cell-focused': focusedCell?.r === r && focusedCell?.c === c
               }"
               @click="cellClicked(r, c)"
+              @contextmenu="(e) => handleRightClick(e, r, c)"
             >
               <span v-if="cell.number" class="cell-number">{{ cell.number }}</span>
               
@@ -41,6 +42,16 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Context Menu -->
+      <div 
+        v-if="contextMenu.visible" 
+        class="context-menu"
+        :style="{ top: contextMenu.y + 'px', left: contextMenu.x + 'px' }"
+        @click="showLetter"
+      >
+        VISA BOKSTAV
       </div>
 
       <div class="clues-container">
@@ -374,6 +385,14 @@ const clues = reactive({ across: [], down: [] });
 const revealed = ref(false);
 const activeDirection = ref('across'); // 'across' eller 'down'
 const focusedCell = ref(null); // {r, c}
+const isAutoMoving = ref(false); // För att förhindra riktningsändring vid automatisk förflyttning
+const contextMenu = reactive({
+  visible: false,
+  x: 0,
+  y: 0,
+  r: null,
+  c: null
+});
 
 const normalize = (str) => {
   return str.replace(/[^a-zA-ZåäöÅÄÖ]/g, '').toUpperCase();
@@ -556,6 +575,12 @@ const cellClicked = (r, c) => {
   const cell = grid.value[r][c];
   if (!cell.char) return;
 
+  // Om vi flyttar automatiskt, ändra inte riktning
+  if (isAutoMoving.value) {
+    isAutoMoving.value = false;
+    return;
+  }
+
   if (focusedCell.value?.r === r && focusedCell.value?.c === c) {
     if (cell.isAcross && cell.isDown) {
       activeDirection.value = activeDirection.value === 'across' ? 'down' : 'across';
@@ -572,6 +597,12 @@ const handleInput = (e, r, c) => {
   const val = e.target.value.toUpperCase();
   // Uppdatera modellen manuellt för säkerhets skull
   grid.value[r][c].input = val.slice(-1); // Ta bara sista tecknet om man skriver snabbt
+
+  // AUTORÄTTA: Kolla om bokstaven är rätt direkt
+  const cell = grid.value[r][c];
+  if (cell.char) {
+    cell.isCorrect = cell.input.toUpperCase() === cell.char;
+  }
 
   if (val) {
     moveFocus(r, c, 1); // Flytta 1 steg framåt
@@ -607,11 +638,15 @@ const moveFocus = (r, c, step) => {
     // Om nästa ruta är en del av korsordet, flytta fokus
     if (nextCell.char) {
       focusedCell.value = { r: nextR, c: nextC };
+      // BEHÅLL activeDirection - ändra INTE riktningen automatiskt
       
       // Om vi backar (step -1) och rutan vi landar på har text, töm den
       if (step === -1 && nextCell.input) {
         grid.value[nextR][nextC].input = '';
       }
+
+      // Markera att vi flyttar automatiskt så cellClicked inte ändrar riktning
+      isAutoMoving.value = true;
 
       // Sätt fokus i DOM
       nextTick(() => {
@@ -627,8 +662,37 @@ const isClueActive = (num, dir) => {
   return activeDirection.value === dir;
 };
 
+const handleRightClick = (e, r, c) => {
+  e.preventDefault();
+  const cell = grid.value[r][c];
+  if (!cell.char) return; // Visa bara meny för aktiva celler
+  
+  contextMenu.visible = true;
+  contextMenu.x = e.clientX;
+  contextMenu.y = e.clientY;
+  contextMenu.r = r;
+  contextMenu.c = c;
+};
+
+const showLetter = () => {
+  if (contextMenu.r !== null && contextMenu.c !== null) {
+    const cell = grid.value[contextMenu.r][contextMenu.c];
+    if (cell.char) {
+      cell.input = cell.char;
+      cell.isCorrect = true;
+    }
+  }
+  contextMenu.visible = false;
+};
+
+const hideContextMenu = () => {
+  contextMenu.visible = false;
+};
+
 onMounted(() => {
   generateCrossword();
+  // Stäng context menu när man klickar någon annanstans
+  document.addEventListener('click', hideContextMenu);
 });
 </script>
 
@@ -665,6 +729,16 @@ onMounted(() => {
 
 .action-btn:hover {
   filter: brightness(0.95);
+}
+
+.auto-check-btn {
+  background-color: #90EE90;
+  cursor: default;
+  opacity: 0.8;
+}
+
+.auto-check-btn:hover {
+  filter: brightness(1);
 }
 
 .crossword-layout {
@@ -744,6 +818,26 @@ onMounted(() => {
   color: #666;
   pointer-events: none;
   z-index: 10;
+}
+
+/* Context Menu */
+.context-menu {
+  position: fixed;
+  background-color: white;
+  border: 2px solid #333;
+  border-radius: 6px;
+  padding: 10px 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  z-index: 1000;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+.context-menu:hover {
+  background-color: #90EE90;
 }
 
 /* LEDTRÅDAR */
