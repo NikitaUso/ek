@@ -94,7 +94,7 @@ const flashcardsData = [
   { front: "Mindre formaliserade styrmedel", back: "Mjuka styrmedel, såsom företagskultur, lärande och medarbetarskap." },
   { front: "Vision", back: "Anger hur man vill att kunderna ska uppfatta företaget eller den riktning i vilken företaget ska utvecklas. Önskvärt framtida tillstånd." },
   { front: "Visionens tre funktioner", back: "Legitimerande, ambition & fokus samt identifikation & motivation." },
-  { front: "Affärsidé", back: "Vad företaget ska ägna sig åt och hur man avser att utvecklas i förhållande till visionen. Klargörande av differentiering." },
+  { front: "Affärside", back: "Vad företaget ska ägna sig åt och hur man avser att utvecklas i förhållande till visionen. Klargörande av differentiering." },
   { front: "Strategi", back: "Klargör hur företaget ska arbeta. Plan för hur företagets affärsidé ska uppnås." },
   { front: "Verksamhetsplanering", back: "Nedbrytning av huvudmål till delmål och framtagande av handlingsplaner och riktlinjer." },
   { front: "Effektivitet", back: "Graden av måluppfyllelse och uttryck för i vilken utsträckning företaget uppnår ett mål. Värdet av utflöde / Värdet av inflöde = E" },
