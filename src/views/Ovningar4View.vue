@@ -141,7 +141,9 @@ const generateNewValues = () => {
   scenario.kundInbet = scenario.forsaljning - (Math.floor(Math.random() * 3) * 1000000);
   scenario.varuinkop = Math.floor(scenario.varukostnad * 0.75);
   scenario.datorer = (Math.floor(Math.random() * 5) + 10) * 10000; // 100k - 150k
-  scenario.datorLiv = 3;
+  // Livslängd kan vara 2, 4 eller 5 år (inte 3)
+  const livsArray = [2, 4, 5];
+  scenario.datorLiv = livsArray[Math.floor(Math.random() * livsArray.length)];
   scenario.persKost = Math.floor(scenario.forsaljning * 0.5);
   scenario.persUtbet = scenario.persKost - 400000;
   scenario.lan = 1000000;
@@ -172,7 +174,7 @@ const currentInstruction = computed(() => {
 });
 
 const calcResultat = () => {
-  const avskrivning = scenario.datorer / scenario.datorLiv;
+  const avskrivning = Math.round(scenario.datorer / scenario.datorLiv);
   return scenario.forsaljning - scenario.varukostnad - avskrivning - scenario.persKost - scenario.ranta - scenario.marknad - scenario.ovrigt;
 };
 
@@ -185,7 +187,7 @@ const calcLikviditet = () => {
 const calcTillgangar = () => {
   const kundfordringar = scenario.forsaljning - scenario.kundInbet;
   const lager = scenario.varuinkop - scenario.varukostnad;
-  const datorerNetto = scenario.datorer - (scenario.datorer / scenario.datorLiv);
+  const datorerNetto = scenario.datorer - Math.round(scenario.datorer / scenario.datorLiv);
   const likvidaUB = calcLikviditet();
   return datorerNetto + (lager > 0 ? lager : 0) + kundfordringar + likvidaUB;
 };
@@ -201,7 +203,7 @@ const currentSolution = computed(() => {
     return `<strong>Intäkter:</strong> ${scenario.forsaljning.toLocaleString()} <br>
             <strong>Kostnader:</strong> <br>
             - Varukostnad: ${scenario.varukostnad.toLocaleString()} <br>
-            - Avskrivning datorer (${scenario.datorer}/${scenario.datorLiv}): ${(scenario.datorer/scenario.datorLiv).toLocaleString()} <br>
+            - Avskrivning datorer (${scenario.datorer}/${scenario.datorLiv}): ${Math.round(scenario.datorer/scenario.datorLiv).toLocaleString()} <br>
             - Personalkostnad: ${scenario.persKost.toLocaleString()} <br>
             - Ränta: ${scenario.ranta.toLocaleString()} <br>
             - Övrigt (Marknad+Rörelse): 1 200 000 <br>
@@ -216,7 +218,7 @@ const currentSolution = computed(() => {
             <strong>UB Likvida medel: ${calcLikviditet().toLocaleString()} kr</strong>`;
   }
   return `<strong>Tillgångar vid årets slut:</strong> <br>
-          - Datorer (Netto): ${(scenario.datorer - scenario.datorer/scenario.datorLiv).toLocaleString()} <br>
+          - Datorer (Netto): ${(scenario.datorer - Math.round(scenario.datorer/scenario.datorLiv)).toLocaleString()} <br>
           - Kundfordringar (Sålt - Inbetalt): ${(scenario.forsaljning - scenario.kundInbet).toLocaleString()} <br>
           - Likvida medel (UB): ${calcLikviditet().toLocaleString()} <br>
           <hr>
