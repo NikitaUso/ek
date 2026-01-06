@@ -63,6 +63,21 @@
             :class="{ 'selected': userAnswers.best === 'Beta' }"
             class="choice-btn"
           >Beta</button>
+        </div>
+      </div>
+
+      <div class="question-segment" v-if="!status.showSolution">
+        <p class="question-text">{{ extraQuestion.text }}</p>
+        <div class="input-row">
+          <input 
+            type="number" 
+            v-model="userAnswers.extraAnswer" 
+            :placeholder="currentExercise === 'payback' ? 'År (2 decimaler)' : 'tkr (heltal)'" 
+            :step="currentExercise === 'payback' ? '0.01' : '1'"
+            :class="{ 'input-error': status.hasError }"
+            @keyup.enter="checkAnswer"
+            class="answer-input"
+          />
           <button @click="checkAnswer" class="btn-check">Rätta</button>
         </div>
       </div>
@@ -70,6 +85,10 @@
       <div v-if="status.showSolution" class="solution-area" :class="{ 'correct-bg': isCorrect, 'wrong-bg': !isCorrect }">
         <p class="status-msg">{{ isCorrect ? 'Rätt svar!' : 'Rätt svar och lösning:' }}</p>
         <div class="logic-text" v-html="currentSolution"></div>
+        <div class="extra-answer">
+          <p><strong>Fråga 2:</strong> {{ extraQuestion.text }}</p>
+          <p><strong>Svar:</strong> {{ extraQuestion.correctAnswer }} {{ currentExercise === 'payback' ? 'år' : 'tkr' }}</p>
+        </div>
       </div>
 
       <div class="action-footer">
@@ -84,9 +103,10 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 
 const currentExercise = ref(null);
-const userAnswers = reactive({ best: null });
+const userAnswers = reactive({ best: null, extraAnswer: null });
 const isCorrect = ref(false);
 const status = reactive({ showSolution: false, isShaking: false, hasError: false });
+const extraQuestion = reactive({ text: '', correctAnswer: 0, machine: '' });
 
 const scenario = reactive({
   ranta: 10,
@@ -103,18 +123,32 @@ const generateValues = () => {
   status.showSolution = false;
   status.isShaking = false;
   userAnswers.best = null;
+  userAnswers.extraAnswer = null;
   
-  scenario.ranta = 10;
+  // Variera räntan mellan 8-12%
+  scenario.ranta = Math.floor(Math.random() * 5) + 8;
+  
   scenario.alfa.gi = (Math.floor(Math.random() * 5) + 8) * 10;
   scenario.alfa.io = Math.floor(Math.random() * 10) + 30;
+  scenario.alfa.rv = Math.floor(Math.random() * 10) + 5;
   
   scenario.beta.gi = scenario.alfa.gi;
+  scenario.beta.rv = Math.floor(Math.random() * 10) + 5;
+  
+  // Variera Beta's inbetalningsöverskott mer för att få olika vinnare
+  const variation = Math.random() > 0.5 ? 1 : -1;
+  const diff1 = Math.floor(Math.random() * 8) + 3;
+  const diff2 = Math.floor(Math.random() * 8) + 3;
+  
   scenario.beta.io = [
-    scenario.alfa.io + 5,
-    scenario.alfa.io + 5,
-    scenario.alfa.io - 5,
-    scenario.alfa.io - 5
+    scenario.alfa.io + (diff1 * variation),
+    scenario.alfa.io + (diff2 * variation),
+    scenario.alfa.io - (diff1 * variation),
+    scenario.alfa.io - (diff2 * variation)
   ];
+  
+  // Generera slumpmässig extra fråga
+  generateExtraQuestion();
 };
 
 const currentTitle = computed(() => currentExercise.value === 'payback' ? 'Payback-metoden' : 'Nuvärdesmetoden');
@@ -144,13 +178,112 @@ const results = computed(() => {
 
 const currentSolution = computed(() => {
   if (currentExercise.value === 'payback') {
-    return `Alfa: ${results.value.valAlfa} år. Beta: ${results.value.valBeta} år. Kortast tid vinner.`;
+    const pAlfa = scenario.alfa.gi / scenario.alfa.io;
+    let sum = 0;
+    let betaCalc = '';
+    for(let i=0; i<4; i++) {
+      sum += scenario.beta.io[i];
+      betaCalc += `${i > 0 ? ' + ' : ''}${scenario.beta.io[i]}`;
+      if(sum >= scenario.beta.gi) {
+        const fraction = (sum - scenario.beta.gi) / scenario.beta.io[i];
+        betaCalc += ` = ${sum} tkr (når ${scenario.beta.gi} tkr)`;
+        break;
+      }
+    }
+    
+    return `
+      <div class="calculation-steps">
+        <div class="machine-calc">
+          <h4>Alfa:</h4>
+          <div class="formula">Payback = Grundinvestering / Årligt inbetalningsöverskott</div>
+          <div class="substitution">Payback = ${scenario.alfa.gi} / ${scenario.alfa.io} = <strong>${results.value.valAlfa} år</strong></div>
+        </div>
+        <div class="machine-calc">
+          <h4>Beta:</h4>
+          <div class="formula">Ackumulerade inbetalningar: ${betaCalc}</div>
+          <div class="substitution">Payback = <strong>${results.value.valBeta} år</strong></div>
+        </div>
+        <div class="result">Svar: <strong>${results.value.winner}</strong> (kortast återbetalningstid vinner)</div>
+      </div>
+    `;
   }
-  return `Alfa NV: ${results.value.valAlfa} tkr. Beta NV: ${results.value.valBeta} tkr. Högst värde vinner.`;
+  
+  // Nuvärdesmetoden
+  const r = scenario.ranta / 100;
+  const fakC = (1 - Math.pow(1+r, -4)) / r;
+  
+  let alfaCalc = `${scenario.alfa.io} × ${fakC.toFixed(4)} + ${scenario.alfa.rv} × ${Math.pow(1+r, -4).toFixed(4)} - ${scenario.alfa.gi}`;
+  
+  let betaCalc = '-' + scenario.beta.gi;
+  for(let i=0; i<4; i++) {
+    const factor = Math.pow(1+r, -(i+1));
+    betaCalc += ` + ${scenario.beta.io[i]} × ${factor.toFixed(4)}`;
+  }
+  betaCalc += ` + ${scenario.beta.rv} × ${Math.pow(1+r, -4).toFixed(4)}`;
+  
+  return `
+    <div class="calculation-steps">
+      <div class="machine-calc">
+        <h4>Alfa:</h4>
+        <div class="formula">NV = (IO × annuitetsfaktor) + (RV × diskonteringsfaktor) - GI</div>
+        <div class="substitution">${alfaCalc}</div>
+        <div class="substitution">NV = <strong>${results.value.valAlfa} tkr</strong></div>
+      </div>
+      <div class="machine-calc">
+        <h4>Beta:</h4>
+        <div class="formula">NV = Σ(IO<sub>t</sub> × (1+r)<sup>-t</sup>) + RV × (1+r)<sup>-4</sup> - GI</div>
+        <div class="substitution-small">${betaCalc}</div>
+        <div class="substitution">NV = <strong>${results.value.valBeta} tkr</strong></div>
+      </div>
+      <div class="result">Svar: <strong>${results.value.winner}</strong> (högst nuvärde vinner)</div>
+    </div>
+  `;
 });
 
+const generateExtraQuestion = () => {
+  const machine = Math.random() > 0.5 ? 'Alfa' : 'Beta';
+  extraQuestion.machine = machine;
+  
+  if (currentExercise.value === 'payback') {
+    extraQuestion.text = `2. Vad är återbetalningstiden för maskin ${machine}? (Svara med 2 decimaler, t.ex. 2.35)`;
+    if (machine === 'Alfa') {
+      extraQuestion.correctAnswer = parseFloat((scenario.alfa.gi / scenario.alfa.io).toFixed(2));
+    } else {
+      let sum = 0;
+      for(let i=0; i<4; i++) {
+        sum += scenario.beta.io[i];
+        if(sum >= scenario.beta.gi) {
+          extraQuestion.correctAnswer = parseFloat(((i + 1) - (sum - scenario.beta.gi) / scenario.beta.io[i]).toFixed(2));
+          break;
+        }
+      }
+    }
+  } else {
+    extraQuestion.text = `2. Vad är nuvärdet för maskin ${machine}? (Svara i tkr, heltal)`;
+    const r = scenario.ranta / 100;
+    if (machine === 'Alfa') {
+      const fakC = (1 - Math.pow(1+r, -4)) / r;
+      extraQuestion.correctAnswer = Math.round((scenario.alfa.io * fakC) + (scenario.alfa.rv * Math.pow(1+r, -4)) - scenario.alfa.gi);
+    } else {
+      let nv = -scenario.beta.gi;
+      for(let i=0; i<4; i++) { nv += scenario.beta.io[i] * Math.pow(1+r, -(i+1)); }
+      nv += scenario.beta.rv * Math.pow(1+r, -4);
+      extraQuestion.correctAnswer = Math.round(nv);
+    }
+  }
+};
+
 const checkAnswer = () => {
-  if (userAnswers.best === results.value.winner) {
+  const isQ1Correct = userAnswers.best === results.value.winner;
+  let isQ2Correct = false;
+  
+  if (currentExercise.value === 'payback') {
+    isQ2Correct = Math.abs(parseFloat(userAnswers.extraAnswer) - extraQuestion.correctAnswer) < 0.01;
+  } else {
+    isQ2Correct = parseInt(userAnswers.extraAnswer) === extraQuestion.correctAnswer;
+  }
+  
+  if (isQ1Correct && isQ2Correct) {
     isCorrect.value = true;
     status.showSolution = true;
   } else {
@@ -191,4 +324,18 @@ onMounted(generateValues);
 .wrong-bg { background: #fff5f5; border: 1px solid #f56565; }
 .btn-skip-main { background-color: #FFCCFD; width: 100%; margin-top: 1rem; border: none; padding: 0.7rem; font-weight: 600; cursor: pointer; }
 .btn-back { background-color: #f0f0f0; width: 100%; margin-top: 0.5rem; border: none; padding: 0.7rem; cursor: pointer; }
+
+.calculation-steps { display: flex; flex-direction: column; gap: 1rem; text-align: left; padding: 0.5rem; }
+.machine-calc { background: #f9f9f9; padding: 0.8rem; border-radius: 4px; border-left: 3px solid #FFCCFD; }
+.machine-calc h4 { margin: 0 0 0.5rem 0; font-size: 1rem; color: #333; }
+.calculation-steps .formula { font-style: italic; color: #555; font-size: 0.85rem; margin-bottom: 0.3rem; }
+.calculation-steps .substitution { font-family: monospace; color: #333; font-size: 0.85rem; margin: 0.2rem 0; }
+.calculation-steps .substitution-small { font-family: monospace; color: #333; font-size: 0.75rem; margin: 0.2rem 0; word-break: break-word; }
+.calculation-steps .result { font-size: 1.1rem; margin-top: 0.5rem; padding-top: 0.8rem; border-top: 2px solid #ddd; font-weight: 600; text-align: center; }
+.answer-input { padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px; width: 150px; text-align: center; transition: border-color 0.3s, background-color 0.3s; }
+.input-error { border-color: #f56565; background-color: #fff5f5; }
+.extra-answer { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd; text-align: left; }
+.extra-answer p { margin: 0.3rem 0; }
+.question-segment { margin: 1rem 0; }
+.question-text { font-weight: 600; margin-bottom: 0.8rem; font-size: 1rem; }
 </style>

@@ -28,7 +28,8 @@
         <input 
           type="number" 
           v-model="userAnswer" 
-          placeholder="Svar" 
+          placeholder="Svar (heltal)" 
+          step="1"
           :class="{ 'input-error': status.hasError }"
           @keyup.enter="checkAnswer" 
         />
@@ -37,7 +38,7 @@
 
       <div v-else class="solution-area" :class="{ 'correct-bg': isCorrect, 'wrong-bg': !isCorrect }">
         <p class="status-msg">{{ isCorrect ? 'Rätt svar!' : 'Rätt svar och lösning:' }}</p>
-        <p class="logic-text">{{ currentSolution }}</p>
+        <div class="logic-text" v-html="currentSolution"></div>
       </div>
 
       <div class="action-footer">
@@ -114,13 +115,52 @@ const correctValue = computed(() => {
 });
 
 const currentSolution = computed(() => {
-  if (currentExercise.value === 'slutvärde') return `${scenario.belopp} × (1 + ${scenario.ranta/100})^${scenario.ar} = ${correctValue.value} kr`;
-  if (currentExercise.value === 'nuvärde') return `${scenario.belopp} / (1 + ${scenario.ranta/100})^${scenario.ar} = ${correctValue.value} kr`;
-  return `Beräknat svar: ${correctValue.value} kr`;
+  const r = scenario.ranta / 100;
+  const n = scenario.ar;
+  
+  if (currentExercise.value === 'slutvärde') {
+    return `
+      <div class="calculation-steps">
+        <div class="formula">FV = PV × (1 + r)<sup>${n}</sup></div>
+        <div class="substitution">FV = ${scenario.belopp} × (1 + ${r})<sup>${n}</sup></div>
+        <div class="result">FV = <strong>${correctValue.value} kr</strong></div>
+      </div>
+    `;
+  }
+  
+  if (currentExercise.value === 'nuvärde') {
+    return `
+      <div class="calculation-steps">
+        <div class="formula">PV = FV / (1 + r)<sup>${n}</sup></div>
+        <div class="substitution">PV = ${scenario.belopp} / (1 + ${r})<sup>${n}</sup></div>
+        <div class="result">PV = <strong>${correctValue.value} kr</strong></div>
+      </div>
+    `;
+  }
+  
+  if (currentExercise.value === 'summanuvärde') {
+    return `
+      <div class="calculation-steps">
+        <div class="formula">PV = A × [(1 - (1 + r)<sup>-${n}</sup>) / r]</div>
+        <div class="substitution">PV = ${scenario.belopp} × [(1 - (1 + ${r})<sup>-${n}</sup>) / ${r}]</div>
+        <div class="result">PV = <strong>${correctValue.value} kr</strong></div>
+      </div>
+    `;
+  }
+  
+  // annuitet
+  return `
+    <div class="calculation-steps">
+      <div class="formula">A = PV × [r / (1 - (1 + r)<sup>-${n}</sup>)]</div>
+      <div class="substitution">A = ${scenario.belopp} × [${r} / (1 - (1 + ${r})<sup>-${n}</sup>)]</div>
+      <div class="result">A = <strong>${correctValue.value} kr</strong></div>
+    </div>
+  `;
 });
 
 const checkAnswer = () => {
-  if (parseInt(userAnswer.value) === correctValue.value) {
+  const userAnswerInt = Math.round(Number(userAnswer.value));
+  if (userAnswerInt === correctValue.value) {
     isCorrect.value = true;
     status.showSolution = true;
     status.hasError = false;
@@ -237,6 +277,32 @@ button {
 .correct-bg { background: #f0fff4; border: 1px solid #48bb78; }
 .wrong-bg { background: #fff5f5; border: 1px solid #f56565; }
 
-.status-msg { font-weight: bold; margin-bottom: 0.4rem; }
-.logic-text { font-family: monospace; font-size: 1rem; }
+.status-msg { font-weight: bold; margin-bottom: 0.8rem; }
+.logic-text { font-size: 0.95rem; }
+
+.calculation-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  text-align: left;
+  padding: 0.5rem;
+}
+
+.calculation-steps .formula {
+  font-style: italic;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.calculation-steps .substitution {
+  font-family: monospace;
+  color: #333;
+}
+
+.calculation-steps .result {
+  font-size: 1.1rem;
+  margin-top: 0.3rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #ddd;
+}
 </style>

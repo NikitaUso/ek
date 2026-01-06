@@ -2,7 +2,7 @@
   <div class="view-container">
     <h1>Övningar</h1>
     <nav class="sub-menu sub-menu-top">
-      <a v-for="n in 4" :key="n" :href="'#'">Övningar {{ n }}</a>
+      <a v-for="n in 5" :key="n" :href="'#'">Övningar {{ n }}</a>
     </nav>
     <slot />
   </div>
