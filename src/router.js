@@ -27,9 +27,11 @@ import Ovningar2View from './views/Ovningar2View.vue';
 import Ovningar3View from './views/Ovningar3View.vue';
 import Ovningar4View from './views/Ovningar4View.vue';
 import Ovningar5View from './views/Ovningar5View.vue';
+import GenereradeTentorView from './views/GenereradeTentorView.vue';
 
 const routes = [
   // { path: '/quiz', component: QuizView },
+  { path: '/genererade-tentor', component: GenereradeTentorView },
   { path: '/quiz/1', component: Quiz1View },
   { path: '/quiz/2', component: Quiz2View },
   { path: '/quiz/3', component: Quiz3View },

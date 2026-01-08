@@ -99,6 +99,11 @@ function handleMouseLeave() {
             </div>
           </li>
         </ul>
+        <ul class="nav-links">
+          <li>
+            <router-link to="/genererade-tentor" class="dropbtn" style="display: inline-block; text-align: center; text-decoration: none;">Genererade tentor</router-link>
+          </li>
+        </ul>
       </nav>
     </header>
     <main class="content-area">
