@@ -27,6 +27,7 @@ import Ovningar2View from './views/Ovningar2View.vue';
 import Ovningar3View from './views/Ovningar3View.vue';
 import Ovningar4View from './views/Ovningar4View.vue';
 import Ovningar5View from './views/Ovningar5View.vue';
+import Ovningar6View from './views/Ovningar6View.vue';
 import GenereradeTentorView from './views/GenereradeTentorView.vue';
 
 const routes = [
@@ -60,6 +61,7 @@ const routes = [
   { path: '/ovningar/3', component: Ovningar3View },
   { path: '/ovningar/4', component: Ovningar4View },
   { path: '/ovningar/5', component: Ovningar5View },
+  { path: '/ovningar/6', component: Ovningar6View, name: 'Avvikelse' },
   { path: '/', component: { template: '<div></div>' } }
 ];
 

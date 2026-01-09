@@ -252,9 +252,37 @@ const handleSkipAction = () => {
 <style scoped>
 .view-container { padding: 0.5rem 2rem; max-width: 850px; margin: 0 auto; font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; }
 .main-title { font-size: 1.8rem; margin-bottom: 1rem; color: #333; }
-.exercise-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; width: 100%; }
-.menu-card { background: white; border: 1px solid #ddd; border-radius: 6px; padding: 1.5rem 0.5rem; cursor: pointer; text-align: center; }
-.menu-card:hover { border-color: #FFCCFD; }
+.exercise-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+  margin-top: 2.5rem;
+}
+
+.menu-card {
+  background: linear-gradient(135deg, #f8e8ff 0%, #e0f7fa 100%);
+  border-radius: 18px;
+  box-shadow: 0 4px 18px 0 rgba(80, 80, 120, 0.08), 0 1.5px 4px 0 rgba(120, 120, 160, 0.07);
+  padding: 2.2rem 2.5rem 1.7rem 2.5rem;
+  cursor: pointer;
+  flex: 1 1 260px;
+  min-width: 240px;
+  max-width: 320px;
+  transition: transform 0.18s cubic-bezier(.4,2,.6,1), box-shadow 0.18s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1.5px solid #f3eaff;
+  text-align: center;
+}
+
+.menu-card:hover {
+  background: linear-gradient(135deg, #f3eaff 0%, #e0f7fa 100%);
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: 0 8px 28px 0 rgba(80, 80, 120, 0.13), 0 2.5px 8px 0 rgba(120, 120, 160, 0.10);
+  border-color: #d1c4e9;
+}
 .card-title { font-size: 0.95rem; margin: 0; }
 
 .exercise-card { background: white; border: 1px solid #ddd; border-radius: 6px; padding: 1.5rem; width: 100%; text-align: center; }
