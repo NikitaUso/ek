@@ -97,6 +97,7 @@ function handleMouseLeave() {
               <router-link :to="'/ovningar/4'" style="text-decoration: none; color: #111;">Budgetering</router-link>
               <router-link :to="'/ovningar/5'" style="text-decoration: none; color: #111;">Pålägg & TB</router-link>
               <router-link :to="'/ovningar/6'" style="text-decoration: none; color: #111;">Avvikelse</router-link>
+                <router-link :to="'/ovningar/7'" style="text-decoration: none; color: #111;">Prestationsmätning</router-link>
             </div>
           </li>
         </ul>
