@@ -150,22 +150,22 @@ export default {
       
       // LÖSNING FÖRBRUKNING
       if (this.currentExercise === 'forbrukning') {
-        const prisAvv = (this.s.SP - this.s.VP) * this.s.VK_tot;
-        const kvantAvv = (this.s.SK_tot - this.s.VK_tot) * this.s.SP;
+        const prisAvv = (this.s.VP - this.s.SP) * this.s.VK_tot;
+        const kvantAvv = (this.s.VK_tot - this.s.SK_tot) * this.s.SP;
         const totAvv = prisAvv + kvantAvv;
 
         return `
           <p><strong>Formler:</strong></p>
           <ul class="formula-list">
-            <li>Prisavvikelse = (SP – VP) x VK</li>
-            <li>Kvantitetsavvikelse = (SK – VK) x SP</li>
+            <li>Prisavvikelse = (VP – SP) x VK</li>
+            <li>Kvantitetsavvikelse = (VK – SK) x SP</li>
             <li>Hela avvikelsen = Prisavvikelse + Kvantitetsavvikelse</li>
           </ul>
           <hr>
           <p><strong>Beräkning:</strong></p>
           <p>SP = ${this.s.SP}, VP = ${this.s.VP}, VK = ${fmt(this.s.VK_tot)}, SK = ${fmt(this.s.SK_tot)}</p>
-          <p>Prisavvikelse: (${this.s.SP} - ${this.s.VP}) * ${fmt(this.s.VK_tot)} = <strong>${fmt(prisAvv)} kr</strong></p>
-          <p>Kvantitetsavvikelse: (${fmt(this.s.SK_tot)} - ${fmt(this.s.VK_tot)}) * ${this.s.SP} = <strong>${fmt(kvantAvv)} kr</strong></p>
+          <p>Prisavvikelse: (${this.s.VP} - ${this.s.SP}) * ${fmt(this.s.VK_tot)} = <strong>${fmt(prisAvv)} kr</strong></p>
+          <p>Kvantitetsavvikelse: (${fmt(this.s.VK_tot)} - ${fmt(this.s.SK_tot)}) * ${this.s.SP} = <strong>${fmt(kvantAvv)} kr</strong></p>
           <p>Total avvikelse: ${fmt(totAvv)} kr</p>
         `;
       }
@@ -238,13 +238,13 @@ export default {
         const q = rnd(1, 3);
         if (q === 1) {
           this.s.qLabel = 'Beräkna Prisavvikelsen (kr)';
-          this.correctValue = (this.s.SP - this.s.VP) * this.s.VK_tot;
+          this.correctValue = (this.s.VP - this.s.SP) * this.s.VK_tot;
         } else if (q === 2) {
           this.s.qLabel = 'Beräkna Kvantitetsavvikelsen (kr)';
-          this.correctValue = (this.s.SK_tot - this.s.VK_tot) * this.s.SP;
+          this.correctValue = (this.s.VK_tot - this.s.SK_tot) * this.s.SP;
         } else {
           this.s.qLabel = 'Beräkna Hela avvikelsen (kr)';
-          this.correctValue = ((this.s.SP - this.s.VP) * this.s.VK_tot) + ((this.s.SK_tot - this.s.VK_tot) * this.s.SP);
+          this.correctValue = ((this.s.VP - this.s.SP) * this.s.VK_tot) + ((this.s.VK_tot - this.s.SK_tot) * this.s.SP);
         }
       }
 
